@@ -1,30 +1,40 @@
-from django.test import TestCase
+"""
+Approach inspired by https://github.com/pytest-dev/pytest-django/pull/223.
+"""
+from django.test import TestCase, TransactionTestCase
+from pytest_django.plugin import validate_django_db
 
 
 def pytest_collection_modifyitems(items):
-    def is_testcase_subclass(test):
-        """
-        The default Django test runner gives priority to TestCase subclasses,
-        executing them before all Django-based tests (e.g., TransactionTestCase)
-        and any other unittest.TestCase tests; see
-        https://docs.djangoproject.com/en/1.9/topics/testing/overview/#order-in-which-tests-are-executed.
+    def get_marker_transaction(test):
+        marker = test.get_marker('django_db')
+        if marker:
+            validate_django_db(marker)
+            return marker.transaction
 
-        pytest-django doesn't preserve this ordering out of the box. For more on
-        this, see https://github.com/pytest-dev/pytest-django/issues/214.
+        return None
 
-        This isn't a problem if your project's tests can run independently of each
-        other, in any order. Sadly, the majority of this project's tests rely on
-        initial data populated via migrations, which means that TestCase subclasses
-        *must* run before TransactionTestCase subclasses which reset the database
-        by truncating all tables, deleting any initial data. (The serialized_rollback
-        option can be used to remedy this within a given TransactionTestCase, but
-        it has no effect across distinct test cases; once you exit a TransactionTestCase,
-        any intial data is gone.)
+    def has_fixture(test, fixture):
+        funcargnames = getattr(test, 'funcargnames', None)
+        return funcargnames and fixture in funcargnames
+
+    def weight_test_case(test):
         """
-        # TODO: False (0) sorts before True (1).
-        if test.cls and issubclass(test.cls, TestCase):
+        Key function for ordering test cases like the Django test runner.
+        """
+        is_test_case_subclass = test.cls and issubclass(test.cls, TestCase)
+        is_transaction_test_case_subclass = test.cls and issubclass(test.cls, TransactionTestCase)
+
+        if is_test_case_subclass or get_marker_transaction(test) is False:
+            return 0
+        elif has_fixture(test, 'db'):
             return 0
 
-        return 1
+        if is_transaction_test_case_subclass or get_marker_transaction(test) is True:
+            return 1
+        elif has_fixture(test, 'transactional_db'):
+            return 1
 
-    items.sort(key=is_testcase_subclass)
+        return 0
+
+    items.sort(key=weight_test_case)

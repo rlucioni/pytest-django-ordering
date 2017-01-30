@@ -1,4 +1,4 @@
-.PHONY: quality requirements
+.PHONY: quality requirements test
 
 quality:
 	flake8 .
@@ -6,3 +6,6 @@ quality:
 requirements:
 	pip install -U pip
 	pip install -r requirements.txt
+
+test:
+	pytest
