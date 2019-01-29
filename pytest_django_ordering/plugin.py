@@ -16,7 +16,7 @@ def pytest_collection_modifyitems(items):
         if marker:
             validate_django_db(marker)
             try:
-                return marker.kwargs.get("transaction")
+                return marker.kwargs.get('transaction')
             except AttributeError:
                 # pytest-django < 3.3.0
                 return marker.transaction

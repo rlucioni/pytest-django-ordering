@@ -7,7 +7,7 @@ with open('README.rst') as readme:
 
 setup(
     name='pytest-django-ordering',
-    version='1.0.1',
+    version='1.1.0',
     description='A pytest plugin for preserving the order in which Django runs tests.',
     long_description=long_description,
     classifiers=[
