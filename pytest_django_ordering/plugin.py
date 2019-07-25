@@ -1,10 +1,14 @@
 """
 Approach inspired by https://github.com/pytest-dev/pytest-django/pull/223.
 """
+import pytest
 from django.test import TestCase, TransactionTestCase
 from pytest_django.plugin import validate_django_db
 
 
+# The ordering introduced in https://github.com/pytest-dev/pytest-django/pull/223
+# is still wrong. Run last so we have the final say on ordering.
+@pytest.hookimpl(trylast=True)
 def pytest_collection_modifyitems(items):
     def get_marker_transaction(test):
         try:
@@ -24,8 +28,8 @@ def pytest_collection_modifyitems(items):
         return None
 
     def has_fixture(test, fixture):
-        funcargnames = getattr(test, 'funcargnames', None)
-        return funcargnames and fixture in funcargnames
+        fixturenames = getattr(test, 'fixturenames', None)
+        return fixturenames and fixture in fixturenames
 
     def weight_test_case(test):
         """
