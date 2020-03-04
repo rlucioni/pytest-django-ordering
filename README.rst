@@ -36,7 +36,7 @@ test cases; once you exit a ``TransactionTestCase``, any initial data is gone.
 Installation
 ------------
 
-This plugin supports Python 2.7, 3.5, and 3.6. Install with ``pip``::
+This plugin supports Python 2.7, 3.5, 3.6, 3.7, and 3.8. Install with ``pip``::
 
     $ pip install pytest-django-ordering
 
